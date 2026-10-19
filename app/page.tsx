@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase/client";
-import { ChevronLeft, ChevronRight, X, Instagram, Youtube, Twitter } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Instagram, Twitter } from "lucide-react";
 
 const photos = [
   "SnapInsta.to_483278233_18049999316219890_2812465495201190836_n.jpg",
@@ -67,31 +67,45 @@ export default function Home() {
   const [filter, setFilter] = useState("Categories");
   const [viewer, setViewer] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
-  const [siteSettings, setSiteSettings] = useState({ introText: "Stories, people, and moments seen through MamaLens. Explore photography, creative work, and profiles celebrating the people shaping culture.", subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", youtubeUrl: "https://www.youtube.com/" });
+  const [siteSettings, setSiteSettings] = useState({ introText: "Stories, people, and moments seen through MamaLens. Explore photography, creative work, and profiles celebrating the people shaping culture.", subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", tiktokUrl: "https://www.tiktok.com/" });
   const [managedPhotos, setManagedPhotos] = useState<{ id: string; title: string; cover_image_url: string | null; sort_order: number }[]>([]);
   const [managedArticles, setManagedArticles] = useState<{ id: string; title: string; excerpt: string; published_at: string | null; sort_order: number }[]>([]);
+  const [managedProjects, setManagedProjects] = useState<{ id: string; title: string; excerpt: string; cover_image_url: string | null; sort_order: number }[]>([]);
+  const [managedPages, setManagedPages] = useState<{ slug: string; title: string; sections: unknown[] }[]>([]);
   const [showSubscribeHelp, setShowSubscribeHelp] = useState(false);
   useEffect(() => {
     if (!supabase) return;
     void Promise.all([
       supabase.from("site_pages").select("sections").eq("slug", "site-settings").maybeSingle(),
+      supabase.from("site_pages").select("slug,title,sections").neq("slug", "site-settings"),
       supabase.from("portfolio_items").select("id,title,cover_image_url,sort_order").eq("item_type", "photograph").eq("published", true).order("sort_order", { ascending: true }),
-      supabase.from("portfolio_items").select("id,title,excerpt,published_at,sort_order").eq("item_type", "writing").eq("published", true).order("sort_order", { ascending: true })
-    ]).then(([settingsResult, photoResult, articleResult]) => {
+      supabase.from("portfolio_items").select("id,title,excerpt,published_at,sort_order").eq("item_type", "article").eq("published", true).order("sort_order", { ascending: true }),
+      supabase.from("portfolio_items").select("id,title,excerpt,cover_image_url,sort_order").eq("item_type", "project").eq("published", true).order("sort_order", { ascending: true })
+     ]).then(([settingsResult, pagesResult, photoResult, articleResult, projectResult]) => {
       const value = Array.isArray(settingsResult.data?.sections) ? settingsResult.data.sections[0] : null;
       if (value && typeof value === "object") setSiteSettings((old) => ({ ...old, ...value }));
       if (photoResult.data?.length) setManagedPhotos(photoResult.data as typeof managedPhotos);
       if (articleResult.data?.length) setManagedArticles(articleResult.data as typeof managedArticles);
+      if (projectResult.data?.length) setManagedProjects(projectResult.data as typeof managedProjects);
+      if (pagesResult.data?.length) setManagedPages(pagesResult.data as typeof managedPages);
     });
   }, []);
   const image = (i: number) => managedPhotos.length
     ? (managedPhotos[(i + managedPhotos.length) % managedPhotos.length]?.cover_image_url || "")
     : "/photos/" + photos[(i + photos.length) % photos.length];
   const visible = (managedPhotos.length ? managedPhotos : photos).map((_, i) => i);
+  const workImages = managedProjects.length ? managedProjects : [];
+  const pageInfo = (slug: string) => managedPages.find(item => item.slug === slug);
+  const pageHeading = (slug: string, fallback: string) => pageInfo(slug)?.title || fallback;
+  const pageBody = (slug: string, fallback: string) => {
+    const sections = pageInfo(slug)?.sections;
+    const first = Array.isArray(sections) ? sections[0] : null;
+    return first && typeof first === "object" && "body" in first && typeof first.body === "string" ? first.body : fallback;
+  };
   const displayArticles: [string, string][] = managedArticles.length
     ? managedArticles.map((item) => [item.title, item.published_at ? new Date(item.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) : ""])
     : articles;
-  useEffect(() => { const timer = window.setInterval(() => setSlide((current) => (current + 1) % photos.length), 4500); return () => window.clearInterval(timer); }, []);
+  useEffect(() => { const count = managedPhotos.length || photos.length; if (count < 2) return; const timer = window.setInterval(() => setSlide(current => (current + 1) % count), 4500); return () => window.clearInterval(timer); }, [managedPhotos.length]);
 
   return <main className="site">
     <header className="header">
@@ -111,13 +125,13 @@ export default function Home() {
     </>}
 
     {page === "Work" && <>
-      <section className="work-page"><h1>Work</h1><div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
+      <section className="work-page"><h1>{pageHeading("work","Work")}</h1><p className="page-copy">{pageBody("work","Selected photography and creative projects.")}</p>{workImages.length>0&&<div className="project-grid">{workImages.map(project=><article className="project-card" key={project.id}>{project.cover_image_url&&<img src={project.cover_image_url} alt={project.title}/>}<h2>{project.title}</h2>{project.excerpt&&<p>{project.excerpt}</p>}</article>)}</div>}<div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
       <Impact/><Media />
     </>}
 
-    {page === "About" && <section className="simple-page"><h1>About</h1><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media /><Impact/></section>}
-    {page === "Writing" && <section className="simple-page"><h1>Writing</h1><div className="article-list">{articles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
-    {page === "Contact" && <section className="simple-page"><h1>Contact</h1></section>}
+    {page === "About" && <section className="simple-page"><h1>{pageHeading("about","About")}</h1><p className="page-copy">{pageBody("about","Tell visitors about MamaLens, your approach, and the stories behind your work.")}</p><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media /><Impact/></section>}
+    {page === "Writing" && <section className="simple-page"><h1>{pageHeading("writing","Writing")}</h1><p className="page-copy">{pageBody("writing","Stories, interviews, and articles from MamaLens.")}</p><div className="article-list">{displayArticles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
+    {page === "Contact" && <section className="simple-page"><h1>{pageHeading("contact","Contact")}</h1><p className="page-copy">{pageBody("contact","Add your preferred contact details or enquiry instructions in Studio → Page layouts.")}</p></section>}
 
     <footer>
       <div className="footer-left">
@@ -128,7 +142,7 @@ export default function Home() {
         <div className="social-icons">
           <a href={siteSettings.instagramUrl || "#"} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={22} strokeWidth={1.6}/></a>
           <a href={siteSettings.xUrl || "#"} target="_blank" rel="noreferrer" aria-label="X"><Twitter size={22} strokeWidth={1.6}/></a>
-          <a href={siteSettings.youtubeUrl || "#"} target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={22} strokeWidth={1.6}/></a>
+          <a href={siteSettings.tiktokUrl || "#"} target="_blank" rel="noreferrer" aria-label="TikTok"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 3v11.1a4.1 4.1 0 1 1-3.5-4.05"/><path d="M14 3c.6 3.4 2.6 5.4 6 5.8"/></svg></a>
         </div>
       </div>
       
