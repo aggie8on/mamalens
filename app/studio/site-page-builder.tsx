@@ -19,7 +19,7 @@ const pageDefaults: Page[] = [
     { id: "home-writing", type: "articles", title: "Writing", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "stack" },
   ] },
   { slug: "work", title: "Work", sections: [{ id: "work-intro", type: "intro", title: "Work", eyebrow: "Selected work", text: "Photography and creative projects.", body: "", image: "", visible: true, layout: "stack" }] },
-  { slug: "about", title: "About", sections: [{ id: "about-intro", type: "intro", title: "About MamaLens", eyebrow: "", text: "", body: "The stories, people, and approach behind MamaLens.", image: "", visible: true, layout: "split" }] },
+  { slug: "about", title: "About", sections: [{ id: "about-intro", type: "intro", title: "About MamaLens", eyebrow: "", text: "", body: "The stories, people, and approach behind MamaLens.", image: "", visible: true, layout: "split" }, { id: "about-videos", type: "videos", title: "Images & videos of MamaLens", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "wide" }] },
   { slug: "writing", title: "Writing", sections: [{ id: "writing-intro", type: "intro", title: "Writing", eyebrow: "Articles & blogs", text: "Stories, interviews, and articles from MamaLens.", body: "", image: "", visible: true, layout: "stack" }] },
   { slug: "contact", title: "Contact", sections: [{ id: "contact-intro", type: "intro", title: "Contact", eyebrow: "", text: "Get in touch with MamaLens.", body: "", image: "", visible: true, layout: "stack" }] },
 ];
@@ -66,7 +66,7 @@ export default function SitePageBuilder() {
         const merged = new Map(current.map(page => [page.slug, page]));
         for (const row of rows) {
           const fallback = pageDefaults.find(page => page.slug === row.slug)?.sections ?? [];
-          merged.set(row.slug, { slug: row.slug, title: row.title || row.slug, sections: normalize(row.sections, fallback), updated_at: row.updated_at });
+          const normalized = normalize(row.sections, fallback);\n          if (row.slug === "about" && !normalized.some(section => section.type === "videos")) normalized.push({ id: "about-videos", type: "videos", title: "Images & videos of MamaLens", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "wide" });\n          merged.set(row.slug, { slug: row.slug, title: row.title || row.slug, sections: normalized, updated_at: row.updated_at });
         }
         return [...merged.values()].sort((a, b) => a.slug.localeCompare(b.slug));
       });
