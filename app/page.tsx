@@ -138,7 +138,7 @@ export default function Home() {
       <Impact/>
     </>}
 
-    {page === "About" && <section className="simple-page"><h1>{pageHeading("about","About")}</h1><p className="page-copy">{pageBody("about","Tell visitors about MamaLens, your approach, and the stories behind your work.")}</p><PageCustomSections sections={customSections("about")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} /><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div>{!customSections("about").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "videos") && <MediaGallery/>}<Impact/></section>}
+    {page === "About" && <section className="simple-page"><h1>{pageHeading("about","About")}</h1><p className="page-copy">{pageBody("about","Tell visitors about MamaLens, your approach, and the stories behind your work.")}</p><PageCustomSections sections={customSections("about")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} />{!customSections("about").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "videos") && <MediaGallery/>}<Impact/></section>}
     {page === "Writing" && <section className="simple-page"><h1>{pageHeading("writing","Writing")}</h1><p className="page-copy">{pageBody("writing","Stories, interviews, and articles from MamaLens.")}</p><PageCustomSections sections={customSections("writing")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} />{!customSections("writing").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "articles") && <div className="article-list">{displayArticles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div>}</section>}
     {page === "Contact" && <section className="simple-page"><h1>{pageHeading("contact","Contact")}</h1><p className="page-copy">{pageBody("contact","Add your preferred contact details or enquiry instructions in Studio → Page layouts.")}</p><PageCustomSections sections={customSections("contact")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} /></section>}
 
@@ -198,7 +198,7 @@ function Media() {
   return <section className="media"><div className="media-panel"><p className="media-eyebrow">THE LISTENING CORNER</p><h2>{playlist?.title || "What I'm listening to"}</h2><p className="media-description">{playlist?.description || "A few sounds on repeat lately."}</p>{tracks.length ? <div className="audio-playlist">{tracks.map((track, index) => <article className="audio-track" key={track.id}><span className="audio-track-number">{String(index + 1).padStart(2, "0")}</span><div className="audio-track-info"><strong>{track.title}</strong>{track.description && <small>{track.description}</small>}<audio controls preload="none" src={track.url}/></div></article>)}</div> : <p className="media-hint">The listening playlist will be curated and uploaded through Studio.</p>}</div></section>;
 }
 
-function MediaGallery() {
+function MediaGallery({ title = "Images & videos of MamaLens" }: { title?: string }) {
   const [items, setItems] = useState<{ id: string; title: string; item_type: string; cover_image_url: string | null; media_url: string | null; media_type: string | null; external_url: string | null; excerpt: string | null }[]>([]);
   useEffect(() => {
     if (!supabase) return;
@@ -208,7 +208,7 @@ function MediaGallery() {
     });
     return () => { active = false; };
   }, []);
-  return <section className="media-gallery"><div className="media-gallery-heading"><p className="media-eyebrow">BEHIND THE LENS</p><h2>Images & videos of MamaLens</h2></div>{items.length ? <div className="media-gallery-grid">{items.map(item => <article className="media-gallery-item" key={item.id}>{item.item_type === "video" && item.media_url ? <video controls preload="metadata" poster={item.cover_image_url || undefined} src={item.media_url}/> : item.cover_image_url ? <img src={item.cover_image_url} alt={item.title}/> : null}<div><strong>{item.title}</strong>{item.excerpt && <p>{item.excerpt}</p>}{item.item_type === "video" && !item.media_url && item.external_url && <a href={item.external_url} target="_blank" rel="noreferrer">Watch video ↗</a>}</div></article>)}</div> : <p className="media-hint">Published photographs and videos will appear here when added in Studio.</p>}</section>;
+  return <section className="media-gallery"><div className="media-gallery-heading"><p className="media-eyebrow">BEHIND THE LENS</p><h2>{title}</h2></div>{items.length ? <div className="media-gallery-grid">{items.map(item => <article className="media-gallery-item" key={item.id}>{item.item_type === "video" && item.media_url ? <video controls preload="metadata" poster={item.cover_image_url || undefined} src={item.media_url}/> : item.cover_image_url ? <img src={item.cover_image_url} alt={item.title}/> : null}<div><strong>{item.title}</strong>{item.excerpt && <p>{item.excerpt}</p>}{item.item_type === "video" && !item.media_url && item.external_url && <a href={item.external_url} target="_blank" rel="noreferrer">Watch video ↗</a>}</div></article>)}</div> : <p className="media-hint">Published photographs and videos will appear here when added in Studio.</p>}</section>;
 }
 
 function PageCustomSections({ sections, projects = [], articles = [], onNavigate }: {
@@ -229,10 +229,10 @@ function PageCustomSections({ sections, projects = [], articles = [], onNavigate
     const layout = typeof section.layout === "string" ? section.layout : "stack";
     return <section key={typeof section.id === "string" ? section.id : index} className={`managed-page-section managed-layout-${layout} managed-type-${type}`}>
       {src && <img src={src} alt={title || "MamaLens page image"}/>}
-      <div className="managed-page-copy">{eyebrow && <span className="managed-eyebrow">{eyebrow}</span>}{title && <h2>{title}</h2>}{text && <p>{text}</p>}{body && <p className="managed-body">{body}</p>}{type === "links" && /^https?:\/\//i.test(body.trim()) && <a href={body.trim()} target="_blank" rel="noreferrer">Explore link ↗</a>}</div>
+      <div className="managed-page-copy">{type !== "videos" && <>{eyebrow && <span className="managed-eyebrow">{eyebrow}</span>}{title && <h2>{title}</h2>}{text && <p>{text}</p>}{body && <p className="managed-body">{body}</p>}{type === "links" && /^https?:\/\//i.test(body.trim()) && <a href={body.trim()} target="_blank" rel="noreferrer">Explore link ↗</a>}</>}</div>
       {type === "projects" && <div className="managed-project-grid">{projects.map(project => <article key={project.id}>{project.cover_image_url && <img src={project.cover_image_url} alt={project.title}/>}<h3>{project.title}</h3>{project.excerpt && <p>{project.excerpt}</p>}</article>)}{projects.length === 0 && <p>Published projects will appear here when added in Studio.</p>}</div>}
       {type === "articles" && <div className="managed-article-list">{articles.map(([articleTitle, date]) => <button type="button" key={articleTitle} onClick={() => onNavigate?.("Writing")}><strong>{articleTitle}</strong><small>{date}</small><span>↗</span></button>)}{articles.length === 0 && <p>Published articles will appear here when added in Studio.</p>}</div>}
-      {type === "videos" && <MediaGallery/>}
+      {type === "videos" && <MediaGallery title={title || "Images & videos of MamaLens"}/>}
     </section>;
   })}</div>;
 }
