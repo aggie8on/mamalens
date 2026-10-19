@@ -106,7 +106,10 @@ export default function Home() {
   };
   const customSections = (slug: string) => {
     const sections = pageInfo(slug)?.sections;
-    return Array.isArray(sections) ? sections : [];
+    if (!Array.isArray(sections)) return [];
+    const visibleSections = sections.filter(section => !!section && typeof section === "object" && (!("visible" in section) || (section as { visible?: unknown }).visible !== false));
+    const introIndex = visibleSections.findIndex(section => !!section && typeof section === "object" && ["intro", "text"].includes(String((section as Record<string, unknown>).type)));
+    return introIndex >= 0 ? visibleSections.filter((_, index) => index !== introIndex) : visibleSections;
   };
   const displayArticles: [string, string][] = managedArticles.length
     ? managedArticles.map((item) => [item.title, item.published_at ? new Date(item.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) : ""])
@@ -123,21 +126,21 @@ export default function Home() {
         <div className="identity"><h1>{pageHeading("home","MamaLens")}</h1><p>Sports Photographer</p></div>
         <p className="intro-copy">{pageBody("home",siteSettings.introText)}</p>
       </section>
-      <PageCustomSections sections={customSections("home").slice(1)} />
-      <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
+      <PageCustomSections sections={customSections("home")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} />
+      {!customSections("home").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "projects") && <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
       <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{displayArticles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>
       <Impact/>
       <Media />
     </>}
 
     {page === "Work" && <>
-      <section className="work-page"><h1>{pageHeading("work","Work")}</h1><p className="page-copy">{pageBody("work","Selected photography and creative projects.")}</p><PageCustomSections sections={customSections("work").slice(1)} />{workImages.length>0&&<div className="project-grid">{workImages.map(project=><article className="project-card" key={project.id}>{project.cover_image_url&&<img src={project.cover_image_url} alt={project.title}/>}<h2>{project.title}</h2>{project.excerpt&&<p>{project.excerpt}</p>}</article>)}</div>}<div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
+      <section className="work-page"><h1>{pageHeading("work","Work")}</h1><p className="page-copy">{pageBody("work","Selected photography and creative projects.")}</p><PageCustomSections sections={customSections("work")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} />{workImages.length>0&&<div className="project-grid">{workImages.map(project=><article className="project-card" key={project.id}>{project.cover_image_url&&<img src={project.cover_image_url} alt={project.title}/>}<h2>{project.title}</h2>{project.excerpt&&<p>{project.excerpt}</p>}</article>)}</div>}<div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
       <Impact/><Media />
     </>}
 
-    {page === "About" && <section className="simple-page"><h1>{pageHeading("about","About")}</h1><p className="page-copy">{pageBody("about","Tell visitors about MamaLens, your approach, and the stories behind your work.")}</p><PageCustomSections sections={customSections("about").slice(1)} /><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media /><Impact/></section>}
-    {page === "Writing" && <section className="simple-page"><h1>{pageHeading("writing","Writing")}</h1><p className="page-copy">{pageBody("writing","Stories, interviews, and articles from MamaLens.")}</p><PageCustomSections sections={customSections("writing").slice(1)} /><div className="article-list">{displayArticles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
-    {page === "Contact" && <section className="simple-page"><h1>{pageHeading("contact","Contact")}</h1><p className="page-copy">{pageBody("contact","Add your preferred contact details or enquiry instructions in Studio → Page layouts.")}</p><PageCustomSections sections={customSections("contact").slice(1)} /></section>}
+    {page === "About" && <section className="simple-page"><h1>{pageHeading("about","About")}</h1><p className="page-copy">{pageBody("about","Tell visitors about MamaLens, your approach, and the stories behind your work.")}</p><PageCustomSections sections={customSections("about")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} /><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media /><Impact/></section>}
+    {page === "Writing" && <section className="simple-page"><h1>{pageHeading("writing","Writing")}</h1><p className="page-copy">{pageBody("writing","Stories, interviews, and articles from MamaLens.")}</p><PageCustomSections sections={customSections("writing")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} /><div className="article-list">{displayArticles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
+    {page === "Contact" && <section className="simple-page"><h1>{pageHeading("contact","Contact")}</h1><p className="page-copy">{pageBody("contact","Add your preferred contact details or enquiry instructions in Studio → Page layouts.")}</p><PageCustomSections sections={customSections("contact")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} /></section>}
 
     <footer>
       <div className="footer-left">
@@ -181,8 +184,13 @@ function Media() {
   return <section className="media"><div className="media-panel"><p>Images and videos of MamaLens</p><h2>Listen</h2>{songs.length ? songs.map(song => <div className="audio-track" key={song.id}><strong>{song.title}</strong>{song.excerpt && <small>{song.excerpt}</small>}{song.media_url ? <audio controls preload="none" src={song.media_url}/> : <p>Audio file coming soon.</p>}</div>) : <p className="media-hint">Songs and audio will appear here when added and published in Studio → Portfolio & writing. Upload audio files as Audio items.</p>}</div></section>;
 }
 
-function PageCustomSections({ sections }: { sections: unknown[] }) {
-  const supported = sections.filter((section): section is Record<string, unknown> => !!section && typeof section === "object" && section.visible !== false && ["text", "image", "links", "intro"].includes(String(section.type)));
+function PageCustomSections({ sections, projects = [], articles = [], onNavigate }: {
+  sections: unknown[];
+  projects?: { id: string; title: string; excerpt: string; cover_image_url: string | null }[];
+  articles?: [string, string][];
+  onNavigate?: (page: string) => void;
+}) {
+  const supported = sections.filter((section): section is Record<string, unknown> => !!section && typeof section === "object" && section.visible !== false && ["text", "image", "links", "intro", "projects", "articles", "audio"].includes(String(section.type)));
   if (!supported.length) return null;
   return <div className="managed-page-sections">{supported.map((section, index) => {
     const title = typeof section.title === "string" ? section.title : "";
@@ -195,6 +203,9 @@ function PageCustomSections({ sections }: { sections: unknown[] }) {
     return <section key={typeof section.id === "string" ? section.id : index} className={`managed-page-section managed-layout-${layout} managed-type-${type}`}>
       {src && <img src={src} alt={title || "MamaLens page image"}/>}
       <div className="managed-page-copy">{eyebrow && <span className="managed-eyebrow">{eyebrow}</span>}{title && <h2>{title}</h2>}{text && <p>{text}</p>}{body && <p className="managed-body">{body}</p>}{type === "links" && /^https?:\/\//i.test(body.trim()) && <a href={body.trim()} target="_blank" rel="noreferrer">Explore link ↗</a>}</div>
+      {type === "projects" && <div className="managed-project-grid">{projects.map(project => <article key={project.id}>{project.cover_image_url && <img src={project.cover_image_url} alt={project.title}/>}<h3>{project.title}</h3>{project.excerpt && <p>{project.excerpt}</p>}</article>)}{projects.length === 0 && <p>Published projects will appear here when added in Studio.</p>}</div>}
+      {type === "articles" && <div className="managed-article-list">{articles.map(([articleTitle, date]) => <button type="button" key={articleTitle} onClick={() => onNavigate?.("Writing")}><strong>{articleTitle}</strong><small>{date}</small><span>↗</span></button>)}{articles.length === 0 && <p>Published articles will appear here when added in Studio.</p>}</div>}
+      {type === "audio" && <Media/>}
     </section>;
   })}</div>;
 }
