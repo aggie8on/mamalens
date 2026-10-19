@@ -66,7 +66,6 @@ export default function Home() {
   const [page, setPage] = useState("Home");
   const [filter, setFilter] = useState("Categories");
   const [viewer, setViewer] = useState<number | null>(null);
-  const [slide, setSlide] = useState(0);
   const [siteSettings, setSiteSettings] = useState({ introText: "Stories, people, and moments seen through MamaLens. Explore photography, creative work, and profiles celebrating the people shaping culture.", subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", tiktokUrl: "https://www.tiktok.com/" });
   const [managedPhotos, setManagedPhotos] = useState<{ id: string; title: string; cover_image_url: string | null; sort_order: number }[]>([]);
   const [managedArticles, setManagedArticles] = useState<{ id: string; title: string; excerpt: string; published_at: string | null; sort_order: number }[]>([]);
@@ -105,7 +104,6 @@ export default function Home() {
   const displayArticles: [string, string][] = managedArticles.length
     ? managedArticles.map((item) => [item.title, item.published_at ? new Date(item.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) : ""])
     : articles;
-  useEffect(() => { const count = managedPhotos.length || photos.length; if (count < 2) return; const timer = window.setInterval(() => setSlide(current => (current + 1) % count), 4500); return () => window.clearInterval(timer); }, [managedPhotos.length]);
 
   return <main className="site">
     <header className="header">
@@ -114,7 +112,7 @@ export default function Home() {
     </header>
     {page === "Home" && <>
       <section className="home-intro">
-        <div className="portrait carousel-sliding"><img key={image(slide)} src={image(slide)} alt={"MamaLens featured photograph " + (slide + 1)}/></div>
+        <div className="portrait"><img src={image(0)} alt="MamaLens featured photograph"/></div>
         <div className="identity"><h1>{pageHeading("home","MamaLens")}</h1><p>Sports Photographer</p></div>
         <p className="intro-copy">{pageBody("home",siteSettings.introText)}</p>
       </section>
@@ -153,7 +151,17 @@ export default function Home() {
 }
 
 function Impact() {
-  return <section className="impact"><h2>Impact</h2><div className="impact-track"><article></article><article></article><article></article><article></article></div></section>;
+  const [activeSlide, setActiveSlide] = useState(0);
+  const slides = [
+    { title: "Client feedback", copy: "Client feedback will be featured here.", byline: "Client testimonial" },
+    { title: "Stories that matter", copy: "A space for the people and communities behind the work.", byline: "MamaLens" },
+    { title: "Photography with purpose", copy: "Celebrating the moments, people, and stories that make an impact.", byline: "MamaLens" },
+  ];
+  useEffect(() => {
+    const timer = window.setInterval(() => setActiveSlide(current => (current + 1) % slides.length), 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return <section className="impact"><h2>Impact</h2><div className="impact-viewport"><div className="impact-track" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>{slides.map((slide, index) => <article key={slide.title} aria-hidden={index !== activeSlide}><div className="impact-card"><span className="impact-mark">“</span><h3>{slide.title}</h3><p>{slide.copy}</p><small>{slide.byline}</small></div></article>)}</div></div></section>;
 }
 
 function Media() {
