@@ -154,8 +154,8 @@ function Impact() {
   const [activeSlide, setActiveSlide] = useState(0);
   const slides = [
     { title: "Client feedback", copy: "Client feedback will be featured here.", byline: "Client testimonial" },
-    { title: "Stories that matter", copy: "A space for the people and communities behind the work.", byline: "MamaLens" },
-    { title: "Photography with purpose", copy: "Celebrating the moments, people, and stories that make an impact.", byline: "MamaLens" },
+    { title: "Client feedback", copy: "Client feedback will be featured here.", byline: "Client testimonial" },
+    { title: "Client feedback", copy: "Client feedback will be featured here.", byline: "Client testimonial" },
   ];
   useEffect(() => {
     const timer = window.setInterval(() => setActiveSlide(current => (current + 1) % slides.length), 5000);
