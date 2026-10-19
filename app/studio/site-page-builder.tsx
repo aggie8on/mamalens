@@ -4,7 +4,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, ImagePlus, Plus, Save, Trash2 } from "lucide-react";
 import { supabase } from "../../lib/supabase/client";
 
-type SectionType = "intro" | "text" | "image" | "projects" | "articles" | "audio" | "links";
+type SectionType = "intro" | "text" | "image" | "projects" | "articles" | "videos" | "links";
 type Layout = "stack" | "split" | "wide" | "compact";
 type Section = {
   id: string; type: SectionType; title: string; eyebrow: string; text: string;
@@ -19,14 +19,14 @@ const pageDefaults: Page[] = [
     { id: "home-writing", type: "articles", title: "Writing", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "stack" },
   ] },
   { slug: "work", title: "Work", sections: [{ id: "work-intro", type: "intro", title: "Work", eyebrow: "Selected work", text: "Photography and creative projects.", body: "", image: "", visible: true, layout: "stack" }] },
-  { slug: "about", title: "About", sections: [{ id: "about-intro", type: "intro", title: "About MamaLens", eyebrow: "", text: "", body: "The stories, people, and approach behind MamaLens.", image: "", visible: true, layout: "split" }] },
+  { slug: "about", title: "About", sections: [{ id: "about-intro", type: "intro", title: "About MamaLens", eyebrow: "", text: "", body: "The stories, people, and approach behind MamaLens.", image: "", visible: true, layout: "split" }, { id: "about-videos", type: "videos", title: "Images & videos of MamaLens", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "wide" }] },
   { slug: "writing", title: "Writing", sections: [{ id: "writing-intro", type: "intro", title: "Writing", eyebrow: "Articles & blogs", text: "Stories, interviews, and articles from MamaLens.", body: "", image: "", visible: true, layout: "stack" }] },
   { slug: "contact", title: "Contact", sections: [{ id: "contact-intro", type: "intro", title: "Contact", eyebrow: "", text: "Get in touch with MamaLens.", body: "", image: "", visible: true, layout: "stack" }] },
 ];
 const sectionOptions: { type: SectionType; label: string }[] = [
   { type: "intro", label: "Introduction" }, { type: "text", label: "Text content" },
   { type: "image", label: "Image" }, { type: "projects", label: "Work / projects list" },
-  { type: "articles", label: "Articles / blogs list" }, { type: "audio", label: "Audio playlist" },
+  { type: "articles", label: "Articles / blogs list" }, { type: "videos", label: "Images / videos gallery" },
   { type: "links", label: "Links" },
 ];
 const layouts: Layout[] = ["stack", "split", "wide", "compact"];
@@ -34,7 +34,7 @@ const normalize = (value: unknown, fallback: Section[]): Section[] => {
   if (!Array.isArray(value)) return fallback;
   return value.filter((x): x is Record<string, unknown> => !!x && typeof x === "object").map((x, i) => ({
     id: typeof x.id === "string" ? x.id : `section-${i + 1}`,
-    type: (["intro", "text", "image", "projects", "articles", "audio", "links"].includes(String(x.type)) ? x.type : "text") as SectionType,
+    type: (["intro", "text", "image", "projects", "articles", "videos", "links"].includes(String(x.type)) ? x.type : "text") as SectionType,
     title: typeof x.title === "string" ? x.title : "",
     eyebrow: typeof x.eyebrow === "string" ? x.eyebrow : "",
     text: typeof x.text === "string" ? x.text : "",
@@ -66,7 +66,9 @@ export default function SitePageBuilder() {
         const merged = new Map(current.map(page => [page.slug, page]));
         for (const row of rows) {
           const fallback = pageDefaults.find(page => page.slug === row.slug)?.sections ?? [];
-          merged.set(row.slug, { slug: row.slug, title: row.title || row.slug, sections: normalize(row.sections, fallback), updated_at: row.updated_at });
+          const normalized = normalize(row.sections, fallback);
+          if (row.slug === "about" && !normalized.some(section => section.type === "videos")) normalized.push({ id: "about-videos", type: "videos", title: "Images & videos of MamaLens", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "wide" });
+          merged.set(row.slug, { slug: row.slug, title: row.title || row.slug, sections: normalized, updated_at: row.updated_at });
         }
         return [...merged.values()].sort((a, b) => a.slug.localeCompare(b.slug));
       });
