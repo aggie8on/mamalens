@@ -66,7 +66,6 @@ export default function Home() {
   const [page, setPage] = useState("Home");
   const [filter, setFilter] = useState("Categories");
   const [viewer, setViewer] = useState<number | null>(null);
-  const [slide, setSlide] = useState(0);
   const [siteSettings, setSiteSettings] = useState({ introText: "Stories, people, and moments seen through MamaLens. Explore photography, creative work, and profiles celebrating the people shaping culture.", subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", tiktokUrl: "https://www.tiktok.com/" });
   const [managedPhotos, setManagedPhotos] = useState<{ id: string; title: string; cover_image_url: string | null; sort_order: number }[]>([]);
   const [managedArticles, setManagedArticles] = useState<{ id: string; title: string; excerpt: string; published_at: string | null; sort_order: number }[]>([]);
@@ -99,13 +98,22 @@ export default function Home() {
   const pageHeading = (slug: string, fallback: string) => pageInfo(slug)?.title || fallback;
   const pageBody = (slug: string, fallback: string) => {
     const sections = pageInfo(slug)?.sections;
-    const first = Array.isArray(sections) ? sections[0] : null;
-    return first && typeof first === "object" && "body" in first && typeof first.body === "string" ? first.body : fallback;
+    const first = Array.isArray(sections) ? sections.find(section => !!section && typeof section === "object" && (!("visible" in section) || (section as { visible?: unknown }).visible !== false)) : null;
+    if (!first || typeof first !== "object") return fallback;
+    if ("body" in first && typeof first.body === "string" && first.body.trim()) return first.body;
+    if ("text" in first && typeof first.text === "string" && first.text.trim()) return first.text;
+    return fallback;
+  };
+  const customSections = (slug: string) => {
+    const sections = pageInfo(slug)?.sections;
+    if (!Array.isArray(sections)) return [];
+    const visibleSections = sections.filter(section => !!section && typeof section === "object" && (!("visible" in section) || (section as { visible?: unknown }).visible !== false));
+    const introIndex = visibleSections.findIndex(section => !!section && typeof section === "object" && ["intro", "text"].includes(String((section as Record<string, unknown>).type)));
+    return introIndex >= 0 ? visibleSections.filter((_, index) => index !== introIndex) : visibleSections;
   };
   const displayArticles: [string, string][] = managedArticles.length
     ? managedArticles.map((item) => [item.title, item.published_at ? new Date(item.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) : ""])
     : articles;
-  useEffect(() => { const count = managedPhotos.length || photos.length; if (count < 2) return; const timer = window.setInterval(() => setSlide(current => (current + 1) % count), 4500); return () => window.clearInterval(timer); }, [managedPhotos.length]);
 
   return <main className="site">
     <header className="header">
@@ -114,24 +122,25 @@ export default function Home() {
     </header>
     {page === "Home" && <>
       <section className="home-intro">
-        <div className="portrait carousel-sliding"><img key={image(slide)} src={image(slide)} alt={"MamaLens featured photograph " + (slide + 1)}/></div>
+        <div className="portrait"><img src={image(0)} alt="MamaLens featured photograph"/></div>
         <div className="identity"><h1>{pageHeading("home","MamaLens")}</h1><p>Sports Photographer</p></div>
         <p className="intro-copy">{pageBody("home",siteSettings.introText)}</p>
       </section>
+      <PageCustomSections sections={customSections("home")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} />
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
-      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{displayArticles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>
+      {!customSections("home").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "articles") && <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{displayArticles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>}
       <Impact/>
-      <Media />
+      {!customSections("home").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "audio") && <Media />}
     </>}
 
     {page === "Work" && <>
-      <section className="work-page"><h1>{pageHeading("work","Work")}</h1><p className="page-copy">{pageBody("work","Selected photography and creative projects.")}</p>{workImages.length>0&&<div className="project-grid">{workImages.map(project=><article className="project-card" key={project.id}>{project.cover_image_url&&<img src={project.cover_image_url} alt={project.title}/>}<h2>{project.title}</h2>{project.excerpt&&<p>{project.excerpt}</p>}</article>)}</div>}<div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
-      <Impact/><Media />
+      <section className="work-page"><h1>{pageHeading("work","Work")}</h1><p className="page-copy">{pageBody("work","Selected photography and creative projects.")}</p><PageCustomSections sections={customSections("work")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} />{!customSections("work").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "projects") && workImages.length>0&&<div className="project-grid">{workImages.map(project=><article className="project-card" key={project.id}>{project.cover_image_url&&<img src={project.cover_image_url} alt={project.title}/>}<h2>{project.title}</h2>{project.excerpt&&<p>{project.excerpt}</p>}</article>)}</div>}<div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
+      <Impact/>{!customSections("work").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "audio") && <Media />}
     </>}
 
-    {page === "About" && <section className="simple-page"><h1>{pageHeading("about","About")}</h1><p className="page-copy">{pageBody("about","Tell visitors about MamaLens, your approach, and the stories behind your work.")}</p><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media /><Impact/></section>}
-    {page === "Writing" && <section className="simple-page"><h1>{pageHeading("writing","Writing")}</h1><p className="page-copy">{pageBody("writing","Stories, interviews, and articles from MamaLens.")}</p><div className="article-list">{displayArticles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
-    {page === "Contact" && <section className="simple-page"><h1>{pageHeading("contact","Contact")}</h1><p className="page-copy">{pageBody("contact","Add your preferred contact details or enquiry instructions in Studio → Page layouts.")}</p></section>}
+    {page === "About" && <section className="simple-page"><h1>{pageHeading("about","About")}</h1><p className="page-copy">{pageBody("about","Tell visitors about MamaLens, your approach, and the stories behind your work.")}</p><PageCustomSections sections={customSections("about")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} /><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div>{!customSections("about").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "audio") && <Media />}<Impact/></section>}
+    {page === "Writing" && <section className="simple-page"><h1>{pageHeading("writing","Writing")}</h1><p className="page-copy">{pageBody("writing","Stories, interviews, and articles from MamaLens.")}</p><PageCustomSections sections={customSections("writing")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} />{!customSections("writing").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "articles") && <div className="article-list">{displayArticles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div>}</section>}
+    {page === "Contact" && <section className="simple-page"><h1>{pageHeading("contact","Contact")}</h1><p className="page-copy">{pageBody("contact","Add your preferred contact details or enquiry instructions in Studio → Page layouts.")}</p><PageCustomSections sections={customSections("contact")} projects={managedProjects} articles={displayArticles} onNavigate={setPage} /></section>}
 
     <footer>
       <div className="footer-left">
@@ -153,7 +162,17 @@ export default function Home() {
 }
 
 function Impact() {
-  return <section className="impact"><h2>Impact</h2><div className="impact-track"><article></article><article></article><article></article><article></article></div></section>;
+  const [activeSlide, setActiveSlide] = useState(0);
+  const slides = [
+    { title: "Client feedback", copy: "Client feedback will be featured here.", byline: "Client testimonial" },
+    { title: "Client feedback", copy: "Client feedback will be featured here.", byline: "Client testimonial" },
+    { title: "Client feedback", copy: "Client feedback will be featured here.", byline: "Client testimonial" },
+  ];
+  useEffect(() => {
+    const timer = window.setInterval(() => setActiveSlide(current => (current + 1) % slides.length), 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return <section className="impact"><h2>Impact</h2><div className="impact-viewport"><div className="impact-track" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>{slides.map((slide, index) => <article key={slide.title} aria-hidden={index !== activeSlide}><div className="impact-card"><span className="impact-mark">“</span><h3>{slide.title}</h3><p>{slide.copy}</p><small>{slide.byline}</small></div></article>)}</div></div></section>;
 }
 
 function Media() {
@@ -163,4 +182,30 @@ function Media() {
     void supabase.from("portfolio_items").select("id,title,media_url,excerpt").eq("item_type","audio").eq("published",true).order("sort_order",{ascending:true}).then(({data}) => setSongs((data ?? []) as typeof songs));
   }, []);
   return <section className="media"><div className="media-panel"><p>Images and videos of MamaLens</p><h2>Listen</h2>{songs.length ? songs.map(song => <div className="audio-track" key={song.id}><strong>{song.title}</strong>{song.excerpt && <small>{song.excerpt}</small>}{song.media_url ? <audio controls preload="none" src={song.media_url}/> : <p>Audio file coming soon.</p>}</div>) : <p className="media-hint">Songs and audio will appear here when added and published in Studio → Portfolio & writing. Upload audio files as Audio items.</p>}</div></section>;
+}
+
+function PageCustomSections({ sections, projects = [], articles = [], onNavigate }: {
+  sections: unknown[];
+  projects?: { id: string; title: string; excerpt: string; cover_image_url: string | null }[];
+  articles?: [string, string][];
+  onNavigate?: (page: string) => void;
+}) {
+  const supported = sections.filter((section): section is Record<string, unknown> => !!section && typeof section === "object" && (section as Record<string, unknown>).visible !== false && ["text", "image", "links", "intro", "projects", "articles", "audio"].includes(String((section as Record<string, unknown>).type)));
+  if (!supported.length) return null;
+  return <div className="managed-page-sections">{supported.map((section, index) => {
+    const title = typeof section.title === "string" ? section.title : "";
+    const eyebrow = typeof section.eyebrow === "string" ? section.eyebrow : "";
+    const text = typeof section.text === "string" ? section.text : "";
+    const body = typeof section.body === "string" ? section.body : "";
+    const src = typeof section.image === "string" ? section.image : "";
+    const type = String(section.type);
+    const layout = typeof section.layout === "string" ? section.layout : "stack";
+    return <section key={typeof section.id === "string" ? section.id : index} className={`managed-page-section managed-layout-${layout} managed-type-${type}`}>
+      {src && <img src={src} alt={title || "MamaLens page image"}/>}
+      <div className="managed-page-copy">{eyebrow && <span className="managed-eyebrow">{eyebrow}</span>}{title && <h2>{title}</h2>}{text && <p>{text}</p>}{body && <p className="managed-body">{body}</p>}{type === "links" && /^https?:\/\//i.test(body.trim()) && <a href={body.trim()} target="_blank" rel="noreferrer">Explore link ↗</a>}</div>
+      {type === "projects" && <div className="managed-project-grid">{projects.map(project => <article key={project.id}>{project.cover_image_url && <img src={project.cover_image_url} alt={project.title}/>}<h3>{project.title}</h3>{project.excerpt && <p>{project.excerpt}</p>}</article>)}{projects.length === 0 && <p>Published projects will appear here when added in Studio.</p>}</div>}
+      {type === "articles" && <div className="managed-article-list">{articles.map(([articleTitle, date]) => <button type="button" key={articleTitle} onClick={() => onNavigate?.("Writing")}><strong>{articleTitle}</strong><small>{date}</small><span>↗</span></button>)}{articles.length === 0 && <p>Published articles will appear here when added in Studio.</p>}</div>}
+      {type === "audio" && <Media/>}
+    </section>;
+  })}</div>;
 }
