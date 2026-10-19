@@ -27,3 +27,20 @@ footer{border:0;padding:20px 0 28px;font-size:11px;color:#777;display:flex;justi
 .studio-settings-form{max-width:720px;margin:0 auto;width:100%}
 .studio-settings-form .studio-footnote{margin-bottom:18px}
 @media(max-width:520px){.top-controls{width:196px;height:40px}.top-controls button{width:30px;height:30px}}
+
+/* Studio content types and editable page presentation */
+.studio-filter-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 0 12px;border-bottom:1px solid #e5e5e5;margin-bottom:4px}
+.studio-filter-tabs button{border:1px solid #ddd;border-radius:999px;background:#fff;padding:6px 10px;font-size:11px;color:#555}
+.studio-filter-tabs button.active{border-color:#111;background:#111;color:#fff}
+.page-copy{font-size:13px;line-height:1.65;color:#444;white-space:pre-line;margin:0 0 22px}
+.project-grid{display:grid;grid-template-columns:1fr;gap:16px;margin:0 0 24px}
+.project-card{border-bottom:1px solid #ddd;padding:0 0 16px}
+.project-card img{width:100%;max-height:260px;object-fit:cover;display:block;margin-bottom:10px}
+.project-card h2{font-size:16px;font-weight:400;margin:0 0 5px}
+.project-card p{font-size:12px;line-height:1.5;color:#666;margin:0}
+.audio-track{width:100%;display:flex;flex-direction:column;align-items:center;gap:5px;margin:3px 0}
+.audio-track strong{font-size:12px;font-weight:500}
+.audio-track small{font-size:10px;color:#eee}
+.audio-track audio{width:min(100%,360px);height:34px}
+.carousel-sliding img{animation:mamalens-slide-in .65s ease both}
+@keyframes mamalens-slide-in{from{opacity:.35;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
