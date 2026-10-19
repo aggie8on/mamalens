@@ -84,7 +84,7 @@ export default function Home() {
         <p className="intro-copy">Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation</p>
       </section>
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
-      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p><button onClick={() => setPage("Contact")}>Subscribe +</button></div><p className="subscribe-note">A place to explore new stories and the work of people, culture and community.</p></section>
+      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p><button onClick={() => setPage("Contact")}>Subscribe +</button></div></section>
       <Impact/>
       <Media/>
     </>}
@@ -110,7 +110,7 @@ export default function Home() {
           <a href="https://www.youtube.com/" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={22} strokeWidth={1.6}/></a>
         </div>
       </div>
-      <small>Photography, culture &amp; stories seen through MamaLens.</small>
+      
     </footer>
 
     {viewer !== null && <div className="lightbox" onClick={() => setViewer(null)} role="dialog" aria-modal="true" aria-label="Image viewer"><div className="dots">{photos.slice(0,12).map((_,i)=><button key={i} className={i === viewer % 12 ? "active" : ""} onClick={e=>{e.stopPropagation();setViewer(i)}} aria-label={"Go to image "+(i+1)}/>)}</div><button className="lb-close" onClick={() => setViewer(null)} aria-label="Close image viewer"><X/></button><button className="lb-prev" onClick={e=>{e.stopPropagation();setViewer((viewer+photos.length-1)%photos.length)}} aria-label="Previous image"><ChevronLeft/></button><img className="lb-image" src={image(viewer)} alt={"MamaLens image "+(viewer+1)} onClick={e=>e.stopPropagation()}/><button className="lb-next" onClick={e=>{e.stopPropagation();setViewer((viewer+1)%photos.length)}} aria-label="Next image"><ChevronRight/></button></div>}
@@ -118,7 +118,7 @@ export default function Home() {
 }
 
 function Impact() {
-  return <section className="impact"><h2>Impact</h2><div className="impact-track"><article><p>These are moving experiences and stories that create connection, share new perspectives and celebrate the people and work shaping our communities.</p></article><article></article><article></article><article></article></div></section>;
+  return <section className="impact"><h2>Impact</h2><div className="impact-track"><article></article><article></article><article></article><article></article></div></section>;
 }
 
 function Media() {
