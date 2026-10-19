@@ -23,3 +23,5 @@
 /* The Impact area is a horizontal, auto-advancing carousel; the portrait stays still. */
 .impact-viewport{overflow:hidden;width:100%;position:relative}.impact-track{display:flex;width:100%;transition:transform .7s cubic-bezier(.22,.61,.36,1);will-change:transform}.impact-track>article{box-sizing:border-box;flex:0 0 100%;min-width:0;padding:4px 1px 12px}.impact-card{min-height:190px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(22px,4vw,44px);background:#f4f1ec;border-radius:3px}.impact-mark{font-family:Georgia,serif;font-size:48px;line-height:.8;color:#a49a8b}.impact-card h3{font-size:clamp(18px,2.5vw,28px);font-weight:500;letter-spacing:-.04em;margin:15px 0 8px}.impact-card p{font-size:14px;line-height:1.65;max-width:560px;margin:0;color:#65615b}.impact-card small{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#858078;margin-top:20px}
 @media(prefers-reduced-motion:reduce){.impact-track{transition:none}}
+
+.spb-page-meta{border-bottom:1px solid #e6e6df;background:#fafaf7}.spb-page-meta .spb-fields{padding:12px}.spb-page-meta .spb-panel-title{background:#fafaf7}
