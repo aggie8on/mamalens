@@ -190,7 +190,7 @@ function PageCustomSections({ sections, projects = [], articles = [], onNavigate
   articles?: [string, string][];
   onNavigate?: (page: string) => void;
 }) {
-  const supported = sections.filter((section): section is Record<string, unknown> => !!section && typeof section === "object" && section.visible !== false && ["text", "image", "links", "intro", "projects", "articles", "audio"].includes(String(section.type)));
+  const supported = sections.filter((section): section is Record<string, unknown> => !!section && typeof section === "object" && (section as Record<string, unknown>).visible !== false && ["text", "image", "links", "intro", "projects", "articles", "audio"].includes(String((section as Record<string, unknown>).type)));
   if (!supported.length) return null;
   return <div className="managed-page-sections">{supported.map((section, index) => {
     const title = typeof section.title === "string" ? section.title : "";
