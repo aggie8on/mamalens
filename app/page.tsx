@@ -59,7 +59,7 @@ const articles = [
   ["Meet Bash Breezy", "July 25, 2021"]
 ];
 
-const categories = ["Sports", "Models", "Products", "Studio", "Outdoor", "Indoor", "Events"];
+const categories = ["Categories"];
 
 export default function Home() {
   const [page, setPage] = useState("Home");
@@ -68,7 +68,7 @@ export default function Home() {
   const [slide, setSlide] = useState(0);
   const image = (i: number) => "/photos/" + photos[(i + photos.length) % photos.length];
   const step = (n: number) => setSlide((slide + n + photos.length) % photos.length);
-  const visible = photos.map((_, i) => i).filter(i => filter === "Categories" || i % categories.length === categories.indexOf(filter));
+  const visible = photos.map((_, i) => i);
 
   return <main className="site">
     <header className="header">
@@ -82,33 +82,33 @@ export default function Home() {
       <section className="home-intro">
         <div className="portrait"><img src={image(4)} alt="MamaLens portrait"/></div>
         <div className="identity"><h1>MamaLens</h1><p>Sports Photographer</p></div>
-        <p className="intro-copy">Stories, people, and moments seen through MamaLens. Explore photography, creative work, and profiles celebrating the people shaping culture.</p>
+        
       </section>
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
-      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new stories and updates.</p><button onClick={() => setPage("Contact")}>Subscribe +</button><small>Get occasional updates from MamaLens.</small></div><p className="subscribe-note">Photography, people and stories from the world around us. A place to discover new work and voices.</p></section>
+      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><button onClick={() => setPage("Contact")}>Subscribe +</button></div></section>
       <Impact/>
       <Media/>
     </>}
 
     {page === "Work" && <>
-      <section className="work-page"><h1>Work</h1><label className="filter"><select value={filter} onChange={e => setFilter(e.target.value)}><option>Categories</option>{categories.map(c=><option key={c}>{c}</option>)}</select></label><div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
+      <section className="work-page"><h1>Work</h1><div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
       <Impact/><Media/>
     </>}
 
-    {page === "About" && <section className="simple-page"><h1>About</h1><p>MamaLens is a home for photography, creative work, and the people and moments that deserve to be seen.</p><p>Three paragraphs about her story, alongside images and video, belong here as specified in the design brief.</p><p>MamaLens documents people, culture and community with care and intention.</p><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media/><Impact/></section>}
-    {page === "Writing" && <section className="simple-page"><h1>Writing</h1><div className="article-list">{articles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div><p className="honest-note">Full original article text and inline article photographs still need to be restored; these titles are not presented as complete posts.</p></section>}
-    {page === "Contact" && <section className="simple-page"><h1>Contact</h1><p>For photography, stories, and creative collaborations, contact MamaLens.</p><a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram ↗</a></section>}
+    {page === "About" && <section className="simple-page"><h1>About</h1><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media/><Impact/></section>}
+    {page === "Writing" && <section className="simple-page"><h1>Writing</h1><div className="article-list">{articles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
+    {page === "Contact" && <section className="simple-page"><h1>Contact</h1></section>}
 
-    <footer><div><span>Copyright MamaLens {new Date().getFullYear()}<br/>Protected By <u>Creative Commons</u></span><div className="social-icons"><a href="https://www.instagram.com/" aria-label="Instagram">■</a><a href="https://x.com/" aria-label="X">■</a><a href="https://www.youtube.com/" aria-label="YouTube">■</a></div></div><small>Photography, culture & stories seen through MamaLens.</small></footer>
+    <footer><div><span>Copyright MamaLens {new Date().getFullYear()}</span></div></footer>
 
-    {viewer !== null && <div className="lightbox" onClick={() => setViewer(null)} role="dialog" aria-modal="true" aria-label="Image viewer"><div className="dots">{photos.slice(0,12).map((_,i)=><button key={i} className={i === viewer % 12 ? "active" : ""} onClick={e=>{e.stopPropagation();setViewer(i)}} aria-label={"Go to image "+(i+1)}/>)}</div><button className="lb-close" onClick={() => setViewer(null)} aria-label="Close image viewer"><X/></button><button className="lb-prev" onClick={e=>{e.stopPropagation();setViewer((viewer+photos.length-1)%photos.length)}} aria-label="Previous image"><ChevronLeft/></button><img className="lb-image" src={image(viewer)} alt={"MamaLens image "+(viewer+1)} onClick={e=>e.stopPropagation()}/><button className="lb-next" onClick={e=>{e.stopPropagation();setViewer((viewer+1)%photos.length)}} aria-label="Next image"><ChevronRight/></button><p className="lb-caption">This image can be viewed and lightly enlarged. Use the arrows to keep focus on the photograph.</p></div>}
+    {viewer !== null && <div className="lightbox" onClick={() => setViewer(null)} role="dialog" aria-modal="true" aria-label="Image viewer"><div className="dots">{photos.slice(0,12).map((_,i)=><button key={i} className={i === viewer % 12 ? "active" : ""} onClick={e=>{e.stopPropagation();setViewer(i)}} aria-label={"Go to image "+(i+1)}/>)}</div><button className="lb-close" onClick={() => setViewer(null)} aria-label="Close image viewer"><X/></button><button className="lb-prev" onClick={e=>{e.stopPropagation();setViewer((viewer+photos.length-1)%photos.length)}} aria-label="Previous image"><ChevronLeft/></button><img className="lb-image" src={image(viewer)} alt={"MamaLens image "+(viewer+1)} onClick={e=>e.stopPropagation()}/><button className="lb-next" onClick={e=>{e.stopPropagation();setViewer((viewer+1)%photos.length)}} aria-label="Next image"><ChevronRight/></button></div>}
   </main>;
 }
 
 function Impact() {
-  return <section className="impact"><h2>Impact</h2><div className="impact-track"><article><p>Stories and images create connection and open new perspectives.</p></article><article><p>We celebrate people, culture, and the work shaping our communities.</p></article><article><p>Every frame holds a story worth seeing.</p></article><article><p>Photography that makes space for people and their voices.</p></article></div></section>;
+  return <section className="impact"><h2>Impact</h2><div className="impact-track"><article></article><article></article><article></article><article></article></div></section>;
 }
 
 function Media() {
-  return <section className="media"><div className="media-panel"><p>Images and video of MamaLens</p><p>What I’m listening to / Spotify playlist</p></div></section>;
+  return <section className="media"><div className="media-panel"></div></section>;
 }
