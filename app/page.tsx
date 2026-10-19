@@ -98,7 +98,7 @@ export default function Home() {
   const pageHeading = (slug: string, fallback: string) => pageInfo(slug)?.title || fallback;
   const pageBody = (slug: string, fallback: string) => {
     const sections = pageInfo(slug)?.sections;
-    const first = Array.isArray(sections) ? sections.find(section => !!section && typeof section === "object" && (!("visible" in section) || section.visible !== false)) : null;
+    const first = Array.isArray(sections) ? sections.find(section => !!section && typeof section === "object" && (!("visible" in section) || (section as { visible?: unknown }).visible !== false)) : null;
     if (!first || typeof first !== "object") return fallback;
     if ("body" in first && typeof first.body === "string" && first.body.trim()) return first.body;
     if ("text" in first && typeof first.text === "string" && first.text.trim()) return first.text;
