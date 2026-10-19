@@ -67,7 +67,7 @@ export default function Home() {
   const [filter, setFilter] = useState("Categories");
   const [viewer, setViewer] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
-  const [siteSettings, setSiteSettings] = useState({ spotifyUrl: "", subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", youtubeUrl: "https://www.youtube.com/" });
+  const [siteSettings, setSiteSettings] = useState({ subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", youtubeUrl: "https://www.youtube.com/" });
   const [showSubscribeHelp, setShowSubscribeHelp] = useState(false);
   useEffect(() => {
     if (!supabase) return;
@@ -77,34 +77,32 @@ export default function Home() {
     });
   }, []);
   const image = (i: number) => "/photos/" + photos[(i + photos.length) % photos.length];
-  const step = (n: number) => setSlide((current) => (current + n + photos.length) % photos.length);
   const visible = photos.map((_, i) => i);
+  useEffect(() => { const timer = window.setInterval(() => setSlide((current) => (current + 1) % photos.length), 4500); return () => window.clearInterval(timer); }, []);
 
   return <main className="site">
     <header className="header">
       <button className="logo" onClick={() => setPage("Home")} aria-label="MamaLens home"><img src="/photos/mama%20lens%20logo.svg" alt="MamaLens logo" /></button>
       <nav><button onClick={() => setPage("Work")}>Work</button><button onClick={() => setPage("About")}>About</button><button onClick={() => setPage("Contact")}>Contact</button></nav>
     </header>
-    <div className="top-controls" aria-label="Featured image carousel"><button className="carousel-arrow" onClick={() => step(-1)} aria-label="Previous featured image"><ChevronLeft size={18}/></button><span className="carousel-count" aria-live="polite">{slide + 1} / {photos.length}</span><button className="carousel-arrow" onClick={() => step(1)} aria-label="Next featured image"><ChevronRight size={18}/></button><span className="control-spacer"/><button className="carousel-open" onClick={() => setViewer(slide)} aria-label="Open featured image">↗</button></div>
-
     {page === "Home" && <>
       <section className="home-intro">
-        <button className="portrait" onClick={() => setViewer(slide)} aria-label="Open featured image"><img src={image(slide)} alt={"Featured MamaLens photograph " + (slide + 1)}/></button>
+        <div className="portrait carousel-sliding"><img src={image(slide)} alt={"MamaLens featured photograph " + (slide + 1)}/></div>
         <div className="identity"><h1>MamaLens</h1><p>Sports Photographer</p></div>
         <p className="intro-copy">Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation</p>
       </section>
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
       <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>
       <Impact/>
-      <Media siteSettings={siteSettings}/>
+      <Media />
     </>}
 
     {page === "Work" && <>
       <section className="work-page"><h1>Work</h1><div className="work-grid">{visible.map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens portfolio photo "+(i+1)}/></button>)}</div></section>
-      <Impact/><Media siteSettings={siteSettings}/>
+      <Impact/><Media />
     </>}
 
-    {page === "About" && <section className="simple-page"><h1>About</h1><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media siteSettings={siteSettings}/><Impact/></section>}
+    {page === "About" && <section className="simple-page"><h1>About</h1><div className="about-images"><img src={image(4)} alt="MamaLens work"/><img src={image(7)} alt="MamaLens work"/></div><Media /><Impact/></section>}
     {page === "Writing" && <section className="simple-page"><h1>Writing</h1><div className="article-list">{articles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
     {page === "Contact" && <section className="simple-page"><h1>Contact</h1></section>}
 
@@ -131,11 +129,11 @@ function Impact() {
   return <section className="impact"><h2>Impact</h2><div className="impact-track"><article></article><article></article><article></article><article></article></div></section>;
 }
 
-function Media({ siteSettings }: { siteSettings: { spotifyUrl: string } }) {
-  const embedUrl = (value: string) => {
-    const match = value.match(/open\.spotify\.com\/(playlist|album|track|artist|show|episode)\/([A-Za-z0-9]+)/);
-    return match ? `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator` : "";
-  };
-  const spotifyEmbed = embedUrl(siteSettings.spotifyUrl);
-  return <section className="media"><div className="media-panel"><p>Images and videos of MamaLens</p>{spotifyEmbed ? <iframe className="spotify-player" src={spotifyEmbed} title="MamaLens Spotify player" width="100%" height="152" style={{ border: 0, borderRadius: 12 }} loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" /> : <p className="media-hint">Add a Spotify playlist or track URL in Studio → Site settings to show the player here.</p>}</div></section>;
+function Media() {
+  const [songs, setSongs] = useState<{id:string;title:string;media_url:string|null;excerpt:string|null}[]>([]);
+  useEffect(() => {
+    if (!supabase) return;
+    void supabase.from("portfolio_items").select("id,title,media_url,excerpt").eq("item_type","audio").eq("published",true).order("sort_order",{ascending:true}).then(({data}) => setSongs((data ?? []) as typeof songs));
+  }, []);
+  return <section className="media"><div className="media-panel"><p>Images and videos of MamaLens</p><h2>Listen</h2>{songs.length ? songs.map(song => <div className="audio-track" key={song.id}><strong>{song.title}</strong>{song.excerpt && <small>{song.excerpt}</small>}{song.media_url ? <audio controls preload="none" src={song.media_url}/> : <p>Audio file coming soon.</p>}</div>) : <p className="media-hint">Songs and audio will appear here when added and published in Studio → Portfolio & writing. Upload audio files as Audio items.</p>}</div></section>;
 }
