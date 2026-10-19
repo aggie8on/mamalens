@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Instagram, Youtube, Twitter } from "lucide-react";
 
 const photos = [
   "SnapInsta.to_483278233_18049999316219890_2812465495201190836_n.jpg",
@@ -75,7 +75,6 @@ export default function Home() {
       <button className="logo" onClick={() => setPage("Home")} aria-label="MamaLens home"><img src="/photos/mama%20lens%20logo.svg" alt="MamaLens logo" /></button>
       <nav><button onClick={() => setPage("Work")}>Work</button><button onClick={() => setPage("About")}>About</button><button onClick={() => setPage("Contact")}>Contact</button></nav>
     </header>
-    <div className="subtitle">Sports Photographer</div>
     <div className="top-controls" aria-label="Featured controls"><button onClick={() => step(-1)} aria-label="Previous feature"><ChevronLeft size={12}/></button><button className="play" onClick={() => step(1)} aria-label="Next feature">●</button><button onClick={() => step(1)} aria-label="Next feature"><ChevronRight size={12}/></button><span className="control-spacer"/><button onClick={() => setViewer(slide)} aria-label="Open featured image">↖</button></div>
 
     {page === "Home" && <>
@@ -99,7 +98,19 @@ export default function Home() {
     {page === "Writing" && <section className="simple-page"><h1>Writing</h1><div className="article-list">{articles.map(([title,date])=><article className="article" key={title}><span><strong>{title}</strong><small>{date}</small></span><span>↗</span></article>)}</div></section>}
     {page === "Contact" && <section className="simple-page"><h1>Contact</h1></section>}
 
-    <footer><div><span>Copyright MamaLens {new Date().getFullYear()}</span></div></footer>
+    <footer>
+      <div className="footer-left">
+        <span>Copyright MamaLens {new Date().getFullYear()}</span>
+        <span>Protected By <a href="https://creativecommons.org/licenses/" target="_blank" rel="noreferrer"><u>Creative Commons</u></a></span>
+      </div>
+      <div className="footer-right">
+        <div className="social-icons">
+          <a href="https://www.instagram.com/mama_lens0/" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={22} strokeWidth={1.6}/></a>
+          <a href="https://x.com/mama_lens" target="_blank" rel="noreferrer" aria-label="X"><Twitter size={22} strokeWidth={1.6}/></a>
+          <a href="https://www.youtube.com/" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={22} strokeWidth={1.6}/></a>
+        </div>
+      </div>
+    </footer>
 
     {viewer !== null && <div className="lightbox" onClick={() => setViewer(null)} role="dialog" aria-modal="true" aria-label="Image viewer"><div className="dots">{photos.slice(0,12).map((_,i)=><button key={i} className={i === viewer % 12 ? "active" : ""} onClick={e=>{e.stopPropagation();setViewer(i)}} aria-label={"Go to image "+(i+1)}/>)}</div><button className="lb-close" onClick={() => setViewer(null)} aria-label="Close image viewer"><X/></button><button className="lb-prev" onClick={e=>{e.stopPropagation();setViewer((viewer+photos.length-1)%photos.length)}} aria-label="Previous image"><ChevronLeft/></button><img className="lb-image" src={image(viewer)} alt={"MamaLens image "+(viewer+1)} onClick={e=>e.stopPropagation()}/><button className="lb-next" onClick={e=>{e.stopPropagation();setViewer((viewer+1)%photos.length)}} aria-label="Next image"><ChevronRight/></button></div>}
   </main>;
