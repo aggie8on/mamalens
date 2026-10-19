@@ -68,16 +68,29 @@ export default function Home() {
   const [viewer, setViewer] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
   const [siteSettings, setSiteSettings] = useState({ subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", youtubeUrl: "https://www.youtube.com/" });
+  const [managedPhotos, setManagedPhotos] = useState<{ id: string; title: string; cover_image_url: string | null; sort_order: number }[]>([]);
+  const [managedArticles, setManagedArticles] = useState<{ id: string; title: string; excerpt: string; published_at: string | null; sort_order: number }[]>([]);
   const [showSubscribeHelp, setShowSubscribeHelp] = useState(false);
   useEffect(() => {
     if (!supabase) return;
-    void supabase.from("site_pages").select("sections").eq("slug", "site-settings").maybeSingle().then(({ data }) => {
-      const value = Array.isArray(data?.sections) ? data.sections[0] : null;
+    void Promise.all([
+      supabase.from("site_pages").select("sections").eq("slug", "site-settings").maybeSingle(),
+      supabase.from("portfolio_items").select("id,title,cover_image_url,sort_order").eq("item_type", "photograph").eq("published", true).order("sort_order", { ascending: true }),
+      supabase.from("portfolio_items").select("id,title,excerpt,published_at,sort_order").eq("item_type", "writing").eq("published", true).order("sort_order", { ascending: true })
+    ]).then(([settingsResult, photoResult, articleResult]) => {
+      const value = Array.isArray(settingsResult.data?.sections) ? settingsResult.data.sections[0] : null;
       if (value && typeof value === "object") setSiteSettings((old) => ({ ...old, ...value }));
+      if (photoResult.data?.length) setManagedPhotos(photoResult.data as typeof managedPhotos);
+      if (articleResult.data?.length) setManagedArticles(articleResult.data as typeof managedArticles);
     });
   }, []);
-  const image = (i: number) => "/photos/" + photos[(i + photos.length) % photos.length];
-  const visible = photos.map((_, i) => i);
+  const image = (i: number) => managedPhotos.length
+    ? (managedPhotos[(i + managedPhotos.length) % managedPhotos.length]?.cover_image_url || "")
+    : "/photos/" + photos[(i + photos.length) % photos.length];
+  const visible = (managedPhotos.length ? managedPhotos : photos).map((_, i) => i);
+  const displayArticles: [string, string][] = managedArticles.length
+    ? managedArticles.map((item) => [item.title, item.published_at ? new Date(item.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" }) : ""])
+    : articles;
   useEffect(() => { const timer = window.setInterval(() => setSlide((current) => (current + 1) % photos.length), 4500); return () => window.clearInterval(timer); }, []);
 
   return <main className="site">
@@ -92,7 +105,7 @@ export default function Home() {
         <p className="intro-copy">Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation</p>
       </section>
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
-      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>
+      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{displayArticles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>
       <Impact/>
       <Media />
     </>}
