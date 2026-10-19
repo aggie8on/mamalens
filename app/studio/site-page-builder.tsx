@@ -58,7 +58,7 @@ export default function SitePageBuilder() {
   const load = useCallback(async () => {
     if (!supabase) { setError("Supabase is not configured."); setLoading(false); return; }
     setLoading(true); setError("");
-    const { data, error: loadError } = await supabase.from("site_pages").select("slug,title,sections,updated_at").order("slug");
+    const { data, error: loadError } = await supabase.from("site_pages").select("slug,title,sections,updated_at").neq("slug", "site-settings").order("slug");
     if (loadError) setError(loadError.message);
     else if (data) {
       const rows = data as { slug: string; title: string; sections: unknown; updated_at?: string }[];
