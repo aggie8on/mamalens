@@ -4,7 +4,7 @@ import { ChangeEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Eye, EyeOff, ImagePlus, Plus, Save, Trash2 } from "lucide-react";
 import { supabase } from "../../lib/supabase/client";
 
-type SectionType = "intro" | "text" | "image" | "projects" | "articles" | "audio" | "links";
+type SectionType = "intro" | "text" | "image" | "projects" | "articles" | "videos" | "links";
 type Layout = "stack" | "split" | "wide" | "compact";
 type Section = {
   id: string; type: SectionType; title: string; eyebrow: string; text: string;
@@ -26,7 +26,7 @@ const pageDefaults: Page[] = [
 const sectionOptions: { type: SectionType; label: string }[] = [
   { type: "intro", label: "Introduction" }, { type: "text", label: "Text content" },
   { type: "image", label: "Image" }, { type: "projects", label: "Work / projects list" },
-  { type: "articles", label: "Articles / blogs list" }, { type: "audio", label: "Audio playlist" },
+  { type: "articles", label: "Articles / blogs list" }, { type: "videos", label: "Images / videos gallery" },
   { type: "links", label: "Links" },
 ];
 const layouts: Layout[] = ["stack", "split", "wide", "compact"];
@@ -34,7 +34,7 @@ const normalize = (value: unknown, fallback: Section[]): Section[] => {
   if (!Array.isArray(value)) return fallback;
   return value.filter((x): x is Record<string, unknown> => !!x && typeof x === "object").map((x, i) => ({
     id: typeof x.id === "string" ? x.id : `section-${i + 1}`,
-    type: (["intro", "text", "image", "projects", "articles", "audio", "links"].includes(String(x.type)) ? x.type : "text") as SectionType,
+    type: (["intro", "text", "image", "projects", "articles", "videos", "links"].includes(String(x.type)) ? x.type : "text") as SectionType,
     title: typeof x.title === "string" ? x.title : "",
     eyebrow: typeof x.eyebrow === "string" ? x.eyebrow : "",
     text: typeof x.text === "string" ? x.text : "",
