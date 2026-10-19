@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase/client";
 import { ChevronLeft, ChevronRight, X, Instagram, Youtube, Twitter } from "lucide-react";
 
 const photos = [
@@ -66,8 +67,17 @@ export default function Home() {
   const [filter, setFilter] = useState("Categories");
   const [viewer, setViewer] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
+  const [siteSettings, setSiteSettings] = useState({ spotifyUrl: "", subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", youtubeUrl: "https://www.youtube.com/" });
+  const [showSubscribeHelp, setShowSubscribeHelp] = useState(false);
+  useEffect(() => {
+    if (!supabase) return;
+    void supabase.from("site_pages").select("sections").eq("slug", "site-settings").maybeSingle().then(({ data }) => {
+      const value = Array.isArray(data?.sections) ? data.sections[0] : null;
+      if (value && typeof value === "object") setSiteSettings((old) => ({ ...old, ...value }));
+    });
+  }, []);
   const image = (i: number) => "/photos/" + photos[(i + photos.length) % photos.length];
-  const step = (n: number) => setSlide((slide + n + photos.length) % photos.length);
+  const step = (n: number) => setSlide((current) => (current + n + photos.length) % photos.length);
   const visible = photos.map((_, i) => i);
 
   return <main className="site">
@@ -75,16 +85,16 @@ export default function Home() {
       <button className="logo" onClick={() => setPage("Home")} aria-label="MamaLens home"><img src="/photos/mama%20lens%20logo.svg" alt="MamaLens logo" /></button>
       <nav><button onClick={() => setPage("Work")}>Work</button><button onClick={() => setPage("About")}>About</button><button onClick={() => setPage("Contact")}>Contact</button></nav>
     </header>
-    <div className="top-controls" aria-label="Featured controls"><button onClick={() => step(-1)} aria-label="Previous feature"><ChevronLeft size={12}/></button><button className="play" onClick={() => step(1)} aria-label="Next feature">●</button><button onClick={() => step(1)} aria-label="Next feature"><ChevronRight size={12}/></button><span className="control-spacer"/><button onClick={() => setViewer(slide)} aria-label="Open featured image">↖</button></div>
+    <div className="top-controls" aria-label="Featured image carousel"><button className="carousel-arrow" onClick={() => step(-1)} aria-label="Previous featured image"><ChevronLeft size={18}/></button><span className="carousel-count" aria-live="polite">{slide + 1} / {photos.length}</span><button className="carousel-arrow" onClick={() => step(1)} aria-label="Next featured image"><ChevronRight size={18}/></button><span className="control-spacer"/><button className="carousel-open" onClick={() => setViewer(slide)} aria-label="Open featured image">↗</button></div>
 
     {page === "Home" && <>
       <section className="home-intro">
-        <div className="portrait"><img src={image(4)} alt="MamaLens portrait"/></div>
+        <button className="portrait" onClick={() => setViewer(slide)} aria-label="Open featured image"><img src={image(slide)} alt={"Featured MamaLens photograph " + (slide + 1)}/></button>
         <div className="identity"><h1>MamaLens</h1><p>Sports Photographer</p></div>
         <p className="intro-copy">Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation</p>
       </section>
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
-      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p><button onClick={() => setPage("Contact")}>Subscribe +</button></div></section>
+      <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{articles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>
       <Impact/>
       <Media/>
     </>}
@@ -105,9 +115,9 @@ export default function Home() {
       </div>
       <div className="footer-right">
         <div className="social-icons">
-          <a href="https://www.instagram.com/mama_lens0/" target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={22} strokeWidth={1.6}/></a>
-          <a href="https://x.com/mama_lens" target="_blank" rel="noreferrer" aria-label="X"><Twitter size={22} strokeWidth={1.6}/></a>
-          <a href="https://www.youtube.com/" target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={22} strokeWidth={1.6}/></a>
+          <a href={siteSettings.instagramUrl || "#"} target="_blank" rel="noreferrer" aria-label="Instagram"><Instagram size={22} strokeWidth={1.6}/></a>
+          <a href={siteSettings.xUrl || "#"} target="_blank" rel="noreferrer" aria-label="X"><Twitter size={22} strokeWidth={1.6}/></a>
+          <a href={siteSettings.youtubeUrl || "#"} target="_blank" rel="noreferrer" aria-label="YouTube"><Youtube size={22} strokeWidth={1.6}/></a>
         </div>
       </div>
       
@@ -122,5 +132,10 @@ function Impact() {
 }
 
 function Media() {
-  return <section className="media"><div className="media-panel"><p>Images and videos of MamaLens</p><p>What I’m listening to / Spotify playlist</p></div></section>;
+  const embedUrl = (value: string) => {
+    const match = value.match(/open\.spotify\.com\/(playlist|album|track|artist|show|episode)\/([A-Za-z0-9]+)/);
+    return match ? `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator` : "";
+  };
+  const spotifyEmbed = embedUrl(siteSettings.spotifyUrl);
+  return <section className="media"><div className="media-panel"><p>Images and videos of MamaLens</p>{spotifyEmbed ? <iframe className="spotify-player" src={spotifyEmbed} title="MamaLens Spotify player" width="100%" height="152" style={{ border: 0, borderRadius: 12 }} loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" /> : <p className="media-hint">Add a Spotify playlist or track URL in Studio → Site settings to show the player here.</p>}</div></section>;
 }
