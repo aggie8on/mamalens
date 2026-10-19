@@ -66,7 +66,9 @@ export default function SitePageBuilder() {
         const merged = new Map(current.map(page => [page.slug, page]));
         for (const row of rows) {
           const fallback = pageDefaults.find(page => page.slug === row.slug)?.sections ?? [];
-          const normalized = normalize(row.sections, fallback);\n          if (row.slug === "about" && !normalized.some(section => section.type === "videos")) normalized.push({ id: "about-videos", type: "videos", title: "Images & videos of MamaLens", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "wide" });\n          merged.set(row.slug, { slug: row.slug, title: row.title || row.slug, sections: normalized, updated_at: row.updated_at });
+          const normalized = normalize(row.sections, fallback);
+          if (row.slug === "about" && !normalized.some(section => section.type === "videos")) normalized.push({ id: "about-videos", type: "videos", title: "Images & videos of MamaLens", eyebrow: "", text: "", body: "", image: "", visible: true, layout: "wide" });
+          merged.set(row.slug, { slug: row.slug, title: row.title || row.slug, sections: normalized, updated_at: row.updated_at });
         }
         return [...merged.values()].sort((a, b) => a.slug.localeCompare(b.slug));
       });
