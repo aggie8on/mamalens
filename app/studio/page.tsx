@@ -57,6 +57,9 @@ export default function StudioPage() {
       const settingsPage=loadedPages.find(page=>page.slug==="site-settings");
       const savedSettings=Array.isArray(settingsPage?.sections)?settingsPage.sections[0]:null;
       if(savedSettings&&typeof savedSettings==="object") setSiteSettings(old=>({...old,...savedSettings}));
+      const homePage=loadedPages.find(page=>page.slug==="home");
+      const homeSection=Array.isArray(homePage?.sections)?homePage.sections[0]:null;
+      if(homeSection&&typeof homeSection==="object"&&"body" in homeSection&&typeof homeSection.body==="string") setSiteSettings(old=>({...old,introText:homeSection.body as string}));
     }
     setBusy(false);
   },[client]);
@@ -129,7 +132,15 @@ export default function StudioPage() {
     event.preventDefault();if(!client)return;
     setBusy(true);setError("");setMessage("");
     const {data,error:saveError}=await client.from("site_pages").upsert({slug:"site-settings",title:"Site settings",sections:[siteSettings],updated_at:new Date().toISOString()},{onConflict:"slug"}).select().single();
-    if(saveError)setError(saveError.message);else{setPages(old=>[...old.filter(p=>p.slug!=="site-settings"),data as SitePage].sort((a,b)=>a.slug.localeCompare(b.slug)));setMessage("Site settings saved. The public site will use the newsletter and social links.");}
+    if(saveError)setError(saveError.message);else{
+      const existingHome=pages.find(page=>page.slug==="home");
+      const homeSections=Array.isArray(existingHome?.sections)?[...existingHome.sections]:[{heading:"MamaLens",body:siteSettings.introText}];
+      const first=homeSections[0];
+      homeSections[0]=first&&typeof first==="object"?{...first,body:siteSettings.introText}:{heading:"MamaLens",body:siteSettings.introText};
+      const {data:homeData,error:homeError}=await client.from("site_pages").upsert({slug:"home",title:"Home",sections:homeSections,updated_at:new Date().toISOString()},{onConflict:"slug"}).select().single();
+      if(homeError)setError(homeError.message);else setPages(old=>[...old.filter(p=>p.slug!=="site-settings"&&p.slug!=="home"),data as SitePage,homeData as SitePage].sort((a,b)=>a.slug.localeCompare(b.slug)));
+      setMessage("Site settings saved.");
+    }
     setBusy(false);
   };
 
@@ -140,7 +151,7 @@ export default function StudioPage() {
     catch(e){setError(e instanceof Error?e.message:"Invalid JSON.");return;}
     setBusy(true);setError("");setMessage("");
     const {data,error:saveError}=await client.from("site_pages").upsert({slug:pageSelected.slug,title:pageSelected.title,sections,updated_at:new Date().toISOString()},{onConflict:"slug"}).select().single();
-    if(saveError)setError(saveError.message);else{setPageSelected(data as SitePage);setPages(old=>[...old.filter(p=>p.slug!==data.slug),data as SitePage].sort((a,b)=>a.slug.localeCompare(b.slug)));setMessage("Page layout saved.");}
+    if(saveError)setError(saveError.message);else{setPageSelected(data as SitePage);setPages(old=>[...old.filter(p=>p.slug!==data.slug),data as SitePage].sort((a,b)=>a.slug.localeCompare(b.slug)));if(data.slug==="home"){const first=Array.isArray(data.sections)?data.sections[0]:null;if(first&&typeof first==="object"&&"body" in first&&typeof first.body==="string")setSiteSettings(old=>({...old,introText:first.body as string}));}setMessage("Page layout saved.");}
     setBusy(false);
   };
 
