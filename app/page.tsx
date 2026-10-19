@@ -51,7 +51,7 @@ const photos = [
   "SnapInsta.to_599323788_18077703035219890_684312437673663665_n.jpg"
 ];
 
-const articles = [
+const articles: [string, string][] = [
   ["Meet Oven OD, Uganda’s Young Stylist Looking Up to Becoming a Fashion Star", "May 4, 2022"],
   ["Meet Shan Joe, the Mpambako Busa Hit Maker", "February 6, 2022"],
   ["Upclose with Eli Upset, the Young Outstanding Comedian", "February 2, 2022"],
