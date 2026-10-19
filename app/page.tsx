@@ -130,7 +130,7 @@ export default function Home() {
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
       {!customSections("home").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "articles") && <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{displayArticles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>}
       <Impact/>
-      {!customSections("home").some(section => !!section && typeof section === "object" && (section as Record<string, unknown>).type === "audio") && <Media />}
+      <Media />
     </>}
 
     {page === "Work" && <>
