@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { LogOut, Plus, Save, Trash2, UploadCloud, RefreshCw, ExternalLink } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase } from "../../lib/supabase/client";
 
 const OWNER_EMAIL = "aggie8on@gmail.com";
 type PortfolioItem = {
@@ -108,7 +108,7 @@ export default function StudioPage() {
   };
 
   const deleteItem = async (item:PortfolioItem) => {
-    if(!client||!window.confirm("Delete “"+item.title+"”? This cannot be undone."))return;
+    if(!client||!window.confirm(`Delete “${item.title}”? This cannot be undone.`))return;
     setBusy(true);const {error:deleteError}=await client.from("portfolio_items").delete().eq("id",item.id);
     if(deleteError)setError(deleteError.message);else{setItems(old=>old.filter(x=>x.id!==item.id));if(selected?.id===item.id)setSelected(null);setMessage("Item deleted.");}
     setBusy(false);
