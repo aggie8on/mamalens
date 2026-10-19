@@ -25,7 +25,8 @@ export default function StudioPage() {
   const [password,setPassword] = useState("");
   const [items,setItems] = useState<PortfolioItem[]>([]);
   const [pages,setPages] = useState<SitePage[]>([]);
-  const [activeTab,setActiveTab] = useState<"portfolio"|"pages">("portfolio");
+  const [activeTab,setActiveTab] = useState<"portfolio"|"pages"|"settings">("portfolio");
+  const [siteSettings,setSiteSettings] = useState({ spotifyUrl:"", subscribeUrl:"", instagramUrl:"https://www.instagram.com/mama_lens0/", xUrl:"https://x.com/mama_lens", youtubeUrl:"https://www.youtube.com/" });
   const [selected,setSelected] = useState<Partial<PortfolioItem>|null>(null);
   const [pageSelected,setPageSelected] = useState<SitePage|null>(null);
   const [pageJson,setPageJson] = useState("[]");
@@ -46,7 +47,13 @@ export default function StudioPage() {
     if(itemResult.error) setError(itemResult.error.message);
     else setItems((itemResult.data ?? []) as PortfolioItem[]);
     if(pageResult.error) setError(v=>v ? v+" · "+pageResult.error!.message : pageResult.error!.message);
-    else setPages((pageResult.data ?? []) as SitePage[]);
+    else {
+      const loadedPages=(pageResult.data ?? []) as SitePage[];
+      setPages(loadedPages);
+      const settingsPage=loadedPages.find(page=>page.slug==="site-settings");
+      const savedSettings=Array.isArray(settingsPage?.sections)?settingsPage.sections[0]:null;
+      if(savedSettings&&typeof savedSettings==="object") setSiteSettings(old=>({...old,...savedSettings}));
+    }
     setBusy(false);
   },[client]);
 
@@ -114,6 +121,14 @@ export default function StudioPage() {
     setBusy(false);
   };
 
+  const saveSettings = async (event:FormEvent) => {
+    event.preventDefault();if(!client)return;
+    setBusy(true);setError("");setMessage("");
+    const {data,error:saveError}=await client.from("site_pages").upsert({slug:"site-settings",title:"Site settings",sections:[siteSettings],updated_at:new Date().toISOString()},{onConflict:"slug"}).select().single();
+    if(saveError)setError(saveError.message);else{setPages(old=>[...old.filter(p=>p.slug!=="site-settings"),data as SitePage].sort((a,b)=>a.slug.localeCompare(b.slug)));setMessage("Site settings saved. The public site will use these links and the Spotify player.");}
+    setBusy(false);
+  };
+
   const savePage = async (event:FormEvent) => {
     event.preventDefault();if(!client||!pageSelected)return;
     let sections:unknown[];
@@ -131,8 +146,8 @@ export default function StudioPage() {
 
   return <main className="studio-app">
     <header className="studio-topbar"><a href="/" className="studio-brand">MamaLens <span>/ Studio</span></a><div className="studio-top-actions"><span>{sessionUser.email}</span><button onClick={()=>client?.auth.signOut()}><LogOut size={15}/> Sign out</button></div></header>
-    <div className="studio-body"><aside className="studio-sidebar"><p className="studio-eyebrow">WORKSPACE</p><button className={activeTab==="portfolio"?"active":""} onClick={()=>{setActiveTab("portfolio");setSelected(null);}}>Portfolio & writing</button><button className={activeTab==="pages"?"active":""} onClick={()=>{setActiveTab("pages");setPageSelected(null);}}>Page layouts</button><a href="/" target="_blank" rel="noreferrer">View live site ↗</a></aside>
-    <section className="studio-content"><div className="studio-heading"><div><p className="studio-eyebrow">CONTENT MANAGEMENT</p><h1>{activeTab==="portfolio"?"Portfolio & writing":"Page layouts"}</h1><p>{activeTab==="portfolio"?"Create, edit, publish, and organize your work.":"Edit structured page sections stored in Supabase."}</p></div><button className="studio-quiet" onClick={()=>void load()} disabled={busy}><RefreshCw size={15}/> Refresh</button></div>
+    <div className="studio-body"><aside className="studio-sidebar"><p className="studio-eyebrow">WORKSPACE</p><button className={activeTab==="portfolio"?"active":""} onClick={()=>{setActiveTab("portfolio");setSelected(null);}}>Portfolio & writing</button><button className={activeTab==="pages"?"active":""} onClick={()=>{setActiveTab("pages");setPageSelected(null);}}>Page layouts</button><button className={activeTab==="settings"?"active":""} onClick={()=>setActiveTab("settings")}>Site settings</button><a href="/" target="_blank" rel="noreferrer">View live site ↗</a></aside>
+    <section className="studio-content"><div className="studio-heading"><div><p className="studio-eyebrow">CONTENT MANAGEMENT</p><h1>{activeTab==="portfolio"?"Portfolio & writing":activeTab==="pages"?"Page layouts":"Site settings"}</h1><p>{activeTab==="portfolio"?"Create, edit, publish, and organize your work.":activeTab==="pages"?"Edit structured page sections stored in Supabase.":"Manage the carousel-adjacent integrations, Spotify player, newsletter link, and social profiles."}</p></div><button className="studio-quiet" onClick={()=>void load()} disabled={busy}><RefreshCw size={15}/> Refresh</button></div>
     {error&&<p className="studio-banner error" role="alert">{error}</p>}{message&&<p className="studio-banner success">{message}</p>}
     {activeTab==="portfolio"&&<div className="studio-columns"><div className="studio-list-panel"><div className="studio-list-head"><strong>{items.length} items</strong><button className="studio-primary compact" onClick={()=>{setSelected(blankItem());setMessage("");setError("");}}><Plus size={15}/> New item</button></div>{items.length===0&&<p className="studio-empty">No portfolio items yet. Add your first item.</p>}{items.map(item=><button key={item.id} className={"studio-item-row "+(selected?.id===item.id?"selected":"")} onClick={()=>{setSelected({...item});setMessage("");setError("");}}><span className="studio-item-thumb">{item.cover_image_url?<img src={item.cover_image_url} alt=""/>:"ML"}</span><span className="studio-item-copy"><strong>{item.title}</strong><small>{item.category} · {item.item_type}</small></span><span className={"studio-status "+(item.published?"published":"")}>{item.published?"Live":"Draft"}</span></button>)}</div>
     <div className="studio-editor-panel">{!selected?<div className="studio-empty large">Choose an item or create a new one to edit its details.</div>:<form onSubmit={saveItem} className="studio-form"><div className="studio-form-head"><h2>{selected.id?"Edit item":"New item"}</h2>{selected.id&&<button type="button" className="studio-danger-icon" title="Delete item" onClick={()=>void deleteItem(selected as PortfolioItem)}><Trash2 size={16}/></button>}</div>
@@ -148,6 +163,7 @@ export default function StudioPage() {
       <div className="studio-toggles"><label><input type="checkbox" checked={Boolean(selected.featured)} onChange={e=>setSelected({...selected,featured:e.target.checked})}/> Featured</label><label><input type="checkbox" checked={Boolean(selected.published)} onChange={e=>setSelected({...selected,published:e.target.checked})}/> Published</label></div>
       <button className="studio-primary" disabled={busy}><Save size={15}/>{busy?"Saving…":"Save item"}</button>
       </form>}</div></div>}
+    {activeTab==="settings"&&<form className="studio-editor-panel studio-form studio-settings-form" onSubmit={saveSettings}><h2>Homepage integrations</h2><p className="studio-footnote">These settings control the Spotify player, subscribe button, and footer social icons. Leave a field blank to hide or disable that integration.</p><label>Spotify playlist or track URL<input type="url" value={siteSettings.spotifyUrl} onChange={e=>setSiteSettings({...siteSettings,spotifyUrl:e.target.value})} placeholder="https://open.spotify.com/playlist/…"/></label><label>Newsletter signup URL<input type="url" value={siteSettings.subscribeUrl} onChange={e=>setSiteSettings({...siteSettings,subscribeUrl:e.target.value})} placeholder="https://…"/></label><label>Instagram profile URL<input type="url" value={siteSettings.instagramUrl} onChange={e=>setSiteSettings({...siteSettings,instagramUrl:e.target.value})} placeholder="https://instagram.com/…"/></label><label>X profile URL<input type="url" value={siteSettings.xUrl} onChange={e=>setSiteSettings({...siteSettings,xUrl:e.target.value})} placeholder="https://x.com/…"/></label><label>YouTube channel URL<input type="url" value={siteSettings.youtubeUrl} onChange={e=>setSiteSettings({...siteSettings,youtubeUrl:e.target.value})} placeholder="https://youtube.com/…"/></label><button className="studio-primary" disabled={busy}><Save size={15}/>{busy?"Saving…":"Save site settings"}</button></form>}
     {activeTab==="pages"&&<div className="studio-page-layout"><div className="studio-list-panel"><div className="studio-list-head"><strong>Site pages</strong><button className="studio-primary compact" onClick={()=>{const p={slug:"new-page",title:"New page",sections:[],updated_at:""};setPageSelected(p);setPageJson("[]");}}>New page</button></div>{pages.map(page=><button key={page.slug} className={"studio-item-row "+(pageSelected?.slug===page.slug?"selected":"")} onClick={()=>{setPageSelected(page);setPageJson(JSON.stringify(page.sections??[],null,2));setError("");setMessage("");}}><span className="studio-item-copy"><strong>{page.title}</strong><small>/{page.slug}</small></span></button>)}</div>
     <form className="studio-editor-panel studio-form" onSubmit={savePage}>{!pageSelected?<div className="studio-empty large">Choose a page layout to edit.</div>:<><h2>Edit page layout</h2><label>Page title<input value={pageSelected.title} onChange={e=>setPageSelected({...pageSelected,title:e.target.value})} required/></label><label>Page slug<input value={pageSelected.slug} onChange={e=>setPageSelected({...pageSelected,slug:slugify(e.target.value)})} required/></label><label>Sections JSON<textarea className="studio-json" spellCheck={false} value={pageJson} onChange={e=>setPageJson(e.target.value)} rows={18}/></label><p className="studio-footnote">Sections are stored as JSON. Use an array of section objects so the public renderer can consume them.</p><button className="studio-primary" disabled={busy}><Save size={15}/> Save page layout</button></>}</form></div>}
     </section></div>
