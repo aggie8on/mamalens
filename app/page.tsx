@@ -67,7 +67,7 @@ export default function Home() {
   const [filter, setFilter] = useState("Categories");
   const [viewer, setViewer] = useState<number | null>(null);
   const [slide, setSlide] = useState(0);
-  const [siteSettings, setSiteSettings] = useState({ subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", youtubeUrl: "https://www.youtube.com/" });
+  const [siteSettings, setSiteSettings] = useState({ introText: "Stories, people, and moments seen through MamaLens. Explore photography, creative work, and profiles celebrating the people shaping culture.", subscribeUrl: "", instagramUrl: "https://www.instagram.com/mama_lens0/", xUrl: "https://x.com/mama_lens", youtubeUrl: "https://www.youtube.com/" });
   const [managedPhotos, setManagedPhotos] = useState<{ id: string; title: string; cover_image_url: string | null; sort_order: number }[]>([]);
   const [managedArticles, setManagedArticles] = useState<{ id: string; title: string; excerpt: string; published_at: string | null; sort_order: number }[]>([]);
   const [showSubscribeHelp, setShowSubscribeHelp] = useState(false);
@@ -102,7 +102,7 @@ export default function Home() {
       <section className="home-intro">
         <div className="portrait carousel-sliding"><img src={image(slide)} alt={"MamaLens featured photograph " + (slide + 1)}/></div>
         <div className="identity"><h1>MamaLens</h1><p>Sports Photographer</p></div>
-        <p className="intro-copy">Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation</p>
+        <p className="intro-copy">{siteSettings.introText}</p>
       </section>
       <section className="section work-home"><div className="section-head"><h2>Work</h2><button onClick={() => setPage("Work")}>All work ↗</button></div><div className="home-grid">{[0,2,4,6,8,10,12,14,16].map(i=><button key={i} onClick={() => setViewer(i)} aria-label={"Open photo "+(i+1)}><img src={image(i)} alt={"MamaLens photograph "+(i+1)}/></button>)}</div></section>
       <section className="section writing"><div className="section-head"><h2>Writing</h2><button onClick={() => setPage("Writing")}>All writing ↗</button></div><div className="article-list">{displayArticles.map(([title,date],i)=><button key={title} className="article" onClick={() => setPage("Writing")}><span><strong>{title}</strong><small>{date}</small></span><span className="article-arrow">↗</span></button>)}</div><div className="subscribe"><p>Subscribe to receive new updates and news.</p>{siteSettings.subscribeUrl ? <a className="subscribe-button" href={siteSettings.subscribeUrl} target="_blank" rel="noreferrer">Subscribe +</a> : <button onClick={() => setShowSubscribeHelp(true)}>Subscribe +</button>}{showSubscribeHelp && <div className="subscribe-help" role="status">Add your newsletter signup URL in Studio → Site settings to activate subscriptions.<button onClick={() => setShowSubscribeHelp(false)} aria-label="Dismiss message">×</button></div>}</div></section>
