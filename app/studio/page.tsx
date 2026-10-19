@@ -4,7 +4,7 @@ import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react"
 import { LogOut, Plus, Save, Trash2, UploadCloud, RefreshCw, ExternalLink } from "lucide-react";
 import { supabase } from "../../lib/supabase/client";
 
-const OWNER_EMAIL = "aggie8on@gmail.com";
+const OWNER_EMAIL = "mamalens000@gmail.com";
 type PortfolioItem = {
   id: string; title: string; slug: string; item_type: string; category: string;
   excerpt: string; content: Record<string, unknown>; cover_image_url: string | null;
