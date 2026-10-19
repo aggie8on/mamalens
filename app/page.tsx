@@ -114,7 +114,7 @@ export default function Home() {
     </header>
     {page === "Home" && <>
       <section className="home-intro">
-        <div className="portrait carousel-sliding"><img src={image(slide)} alt={"MamaLens featured photograph " + (slide + 1)}/></div>
+        <div className="portrait carousel-sliding"><img key={image(slide)} src={image(slide)} alt={"MamaLens featured photograph " + (slide + 1)}/></div>
         <div className="identity"><h1>MamaLens</h1><p>Sports Photographer</p></div>
         <p className="intro-copy">{siteSettings.introText}</p>
       </section>
